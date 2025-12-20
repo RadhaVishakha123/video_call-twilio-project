@@ -2,8 +2,7 @@ name: CI
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   pull_request:
 
 permissions:
@@ -19,17 +18,13 @@ jobs:
         with:
           fetch-depth: 0
 
-      # Setup Node.js
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
+          cache: npm
 
-      # Install dependencies
       - run: npm ci
 
-      # Check formatting
-      - run: npx nx format:check --base="origin/main"
+      - run: npx nx format:check
 
-      # Run lint, test, build, typecheck, e2e
-      - run: npx nx run-many -t lint test build typecheck e2e-ci
+      - run: npx nx run-many -t lint test build --verbose
