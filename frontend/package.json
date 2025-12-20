@@ -1,5 +1,11 @@
 {
   "name": "@org/frontend",
   "version": "0.0.1",
-  "private": true
+  "private": true,
+  "dependencies": {
+    "ant": "^0.0.0",
+    "antd": "^6.1.1",
+    "react-responsive": "^10.0.1",
+    "react-router-dom": "^7.11.0"
+  }
 }
