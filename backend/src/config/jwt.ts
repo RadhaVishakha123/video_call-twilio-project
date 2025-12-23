@@ -1,4 +1,4 @@
-import { JwtPayload } from "../interfaces/jwtinterface";
+import { JwtPayload } from "../interfaces/jwt-interface";
 import jwt from "jsonwebtoken";
 const JWT_SECRET = process.env.JWT_SECRET as string;
 export const signToken = (payload: JwtPayload): string => {

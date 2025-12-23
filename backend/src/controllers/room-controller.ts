@@ -1,5 +1,5 @@
-import { Request, Response } from "express";
-import { twilioClient } from "../config/twilio";
+import { Request, Response } from 'express';
+import { twilioClient } from '../config/twilio';
 
 export const createRoom = async (
   req: Request,
@@ -8,20 +8,20 @@ export const createRoom = async (
   const { roomName } = req.body;
 
   if (!roomName) {
-    res.status(400).json({ error: "roomName is required" });
+    res.status(400).json({ error: 'Room name is required' });
     return;
   }
 
   try {
     const room = await twilioClient.video.v1.rooms.create({
       uniqueName: roomName,
-      type: "group" // or "peer-to-peer"
+      type: 'group', // or "peer-to-peer"
     });
 
     res.status(201).json({
       sid: room.sid,
       name: room.uniqueName,
-      status: room.status
+      status: room.status,
     });
   } catch (error: any) {
     if (error.code === 53113) {
@@ -29,7 +29,7 @@ export const createRoom = async (
       const room = await twilioClient.video.v1.rooms(roomName).fetch();
       res.json(room);
     } else {
-      res.status(500).json({ error: "Failed to create room" });
+      res.status(500).json({ error: 'Failed to create room' });
     }
   }
 };
