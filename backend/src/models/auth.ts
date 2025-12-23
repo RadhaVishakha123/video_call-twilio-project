@@ -1,5 +1,5 @@
-import mongoose, { Document, Schema, Model } from "mongoose";
-import {IUser} from "..//interfaces/userinterface"
+import mongoose, { Document, Schema, Model } from 'mongoose';
+import { IUser } from '../interfaces/user-interface';
 
 /* ================= USER SCHEMA ================= */
 const userSchema: Schema<IUser> = new Schema(
@@ -28,6 +28,6 @@ const userSchema: Schema<IUser> = new Schema(
 
 /* ================= USER MODEL ================= */
 const User: Model<IUser> =
-  mongoose.models.User || mongoose.model<IUser>("User", userSchema);
+  mongoose.models.User || mongoose.model<IUser>('User', userSchema);
 
 export default User;

@@ -3,7 +3,7 @@ import bcrypt from "bcrypt";
 import dotenv from "dotenv";
 
 import User from "..//models/auth";
-import RefreshToken from "../models/refreshToken";
+import RefreshToken from "../models/refresh-token";
 import {
   generateAccessToken,
   generateRefreshToken,
