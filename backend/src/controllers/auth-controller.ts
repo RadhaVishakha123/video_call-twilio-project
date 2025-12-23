@@ -6,14 +6,12 @@ import User from "..//models/auth";
 import RefreshToken from "../models/refresh-token";
 import {
   generateAccessToken,
-  generateRefreshToken,
-  varifyRefreshToken,
 } from "..//service/auth";
-
+import {varifyRefreshToken,createRefreshToken} from '..//service/refresh-token'
 dotenv.config();
 
 /* ================= REGISTER ================= */
-export async function registerUser(req: Request, res: Response): Promise<Response> {
+export async function RegisterUser(req: Request, res: Response): Promise<Response> {
   try {
     const { username, email, password } = req.body as {
       username?: string;
@@ -48,7 +46,7 @@ export async function registerUser(req: Request, res: Response): Promise<Respons
 }
 
 /* ================= LOGIN ================= */
-export async function loginUser(req: Request, res: Response): Promise<Response> {
+export async function LoginUser(req: Request, res: Response): Promise<Response> {
   try {
     const { email, password } = req.body as {
       email?: string;
@@ -70,19 +68,14 @@ export async function loginUser(req: Request, res: Response): Promise<Response> 
     }
 
     const accessToken = await generateAccessToken(user);
-    const refreshToken = await generateRefreshToken(user);
-
-    await RefreshToken.create({
-      userId: user._id,
-      token: refreshToken,
-      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-    });
+   
+    const refreshToken=await createRefreshToken(user._id)
 
     return res.status(200).json({
       message: "Login success",
       accessToken,
       refreshToken,
-      user,
+      user:{_id:user._id,username:user.username,email:user.email},
     });
   } catch (err: any) {
     console.error("LOGIN ERROR:", err);
@@ -94,13 +87,13 @@ export async function loginUser(req: Request, res: Response): Promise<Response> 
 }
 
 /* ================= LOGOUT ================= */
-export async function logoutUser(req: Request, res: Response): Promise<Response> {
+export async function LogoutUser(req: Request, res: Response): Promise<Response> {
   try {
     const refreshToken = req.cookies?.refreshToken as string | undefined;
 
     if (refreshToken) {
-      const user = varifyRefreshToken(refreshToken) as { id: string };
-      await RefreshToken.deleteMany({ userId: user.id });
+      const user = await varifyRefreshToken(refreshToken);
+      await RefreshToken.deleteMany({ userId: user?.userId });
     }
 
     return res.json({ message: "Logged out" });

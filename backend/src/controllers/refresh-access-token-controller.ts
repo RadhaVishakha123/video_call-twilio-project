@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
-import RefreshToken from '../models/refresh-token';
-import { varifyRefreshToken, generateAccessToken } from '..//service/auth';
-import { JwtPayload } from '../interfaces/jwt-interface';
+import { generateAccessToken } from '..//service/auth';
+import { varifyRefreshToken } from '..//service/refresh-token';
+import User from '..//models/auth';
 /* ================= CUSTOM REQUEST WITH COOKIES ================= */
 interface RefreshRequest extends Request {
   cookies: {
@@ -9,7 +9,7 @@ interface RefreshRequest extends Request {
   };
 }
 
-export const refreshaccessTokenController = async (
+export const RefreshAccessTokenController = async (
   req: RefreshRequest,
   res: Response
 ): Promise<Response> => {
@@ -20,20 +20,19 @@ export const refreshaccessTokenController = async (
       return res.status(401).json({ message: 'No refresh token' });
     }
 
-    const user = varifyRefreshToken(token) as JwtPayload | null;
+    const refreshToken = await varifyRefreshToken(token);
 
-    if (!user) {
-      return res.status(403).json({ message: 'Invalid token' });
-    }
-
-    // Check DB token exists
-    const savedToken = await RefreshToken.findOne({ userId: user.id, token });
-    if (!savedToken) {
+    if (!refreshToken) {
       return res.status(403).json({ message: 'Invalid token' });
     }
 
     // Create new access token
-    const accessToken = generateAccessToken(user as JwtPayload);
+    const user: any = await User.findById(refreshToken.userId);
+    const accessToken = generateAccessToken({
+      _id: user._id,
+      email: user.email,
+      username: user.username,
+    });
 
     return res.json({ accessToken, user });
   } catch (err: any) {

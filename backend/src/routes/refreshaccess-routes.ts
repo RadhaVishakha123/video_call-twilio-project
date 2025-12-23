@@ -1,8 +1,8 @@
 import { Router } from "express";
-import { refreshaccessTokenController } from "..//controllers/refresh-access-token-controller";
+import { RefreshAccessTokenController } from "..//controllers/refresh-access-token-controller";
 
 const router = Router();
 
-router.post("/", refreshaccessTokenController);
+router.post("/", RefreshAccessTokenController);
 
 export default router;

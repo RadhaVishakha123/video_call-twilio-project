@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+import { Response, NextFunction } from 'express';
 import { varifyAccessToken } from '../service/auth';
 import { JwtPayload } from '../interfaces/jwt-interface';
 import { AuthRequest } from '../interfaces/jwt-interface';
