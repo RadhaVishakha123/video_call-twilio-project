@@ -1,5 +1,5 @@
 import { Response, NextFunction } from 'express';
-import { varifyAccessToken } from '../service/auth';
+import { verifyAccessToken } from '../service/auth';
 import { JwtPayload } from '../interfaces/jwt-interface';
 import { AuthRequest } from '../interfaces/jwt-interface';
 
@@ -17,7 +17,7 @@ export const authenticate = (
 
   const token = authHeader.split(' ')[1];
 
-  const decoded = varifyAccessToken(token) as JwtPayload | null;
+  const decoded = verifyAccessToken(token) as JwtPayload | null;
 
   if (!decoded) {
     res.status(401).json({ error: 'Invalid token' });

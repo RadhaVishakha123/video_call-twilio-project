@@ -25,7 +25,7 @@ export function generateAccessToken(user:JwtPayload ): string {
 
 
 /* ================= TOKEN VERIFY ================= */
-export function varifyAccessToken(
+export function verifyAccessToken(
   token: string
 ): JwtPayload | null {
   try {

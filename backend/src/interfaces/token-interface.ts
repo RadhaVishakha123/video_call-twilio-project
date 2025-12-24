@@ -1,8 +1,6 @@
-import  { Document, Types } from 'mongoose';
-/* ================= INTERFACE ================= */
-export interface IRefreshToken extends Document {
-    userId: Types.ObjectId;
+export interface IRefreshToken {
+    user_id: string;
     token: string;
-    expiresAt: Date;
+    expires_at: Date;
   }
   
