@@ -5,7 +5,7 @@ import { JwtPayload } from '../interfaces/jwt-interface';
 export interface AuthRequest extends Request {
   user?: JwtPayload;
 }
-export const authenticate = (
+export const Authenticate = (
   req: AuthRequest,
   res: Response,
   next: NextFunction

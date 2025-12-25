@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { twilioClient } from '../config/twilio';
 
-export const createRoom = async (
+export const CreateRoom = async (
   req: Request,
   res: Response
 ): Promise<void> => {

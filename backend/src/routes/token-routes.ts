@@ -1,6 +1,5 @@
 import { Router } from 'express';
-import { generateToken } from '../controllers/token-controller';
-import { authenticate } from '../middleware/auth-middleware';
+import { GenerateToken } from '../controllers/token-controller';
 const router = Router();
-router.get('/token', authenticate, generateToken);
+router.get('/token', GenerateToken);
 export default router;

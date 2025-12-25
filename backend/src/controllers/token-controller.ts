@@ -1,6 +1,6 @@
 import { AccessToken, VideoGrant } from '../config/twilio';
 import { Request, Response } from 'express';
-export const generateToken = (req: Request, res: Response) => {
+export const GenerateToken = (req: Request, res: Response) => {
   const { identity } = req.body;
   if (!identity) {
     return res.status(400).json({ error: 'Identity is required' });
