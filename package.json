@@ -2,7 +2,10 @@
   "name": "@org/source",
   "version": "0.0.0",
   "license": "MIT",
-  "scripts": {},
+  "scripts": {
+    "dev": "nx serve @org/backend",
+    "build": "nx build @org/backend"
+  },
   "private": true,
   "devDependencies": {
     "@nx/esbuild": "22.3.3",

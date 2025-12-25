@@ -3,6 +3,7 @@ import { GenerateAccessToken } from '..//service/auth';
 import { VerifyRefreshToken } from '..//service/refresh-token';
 import { pool } from '../config/db';
 import { JwtPayload } from '..//interfaces/jwt-interface';
+import {UserWithPassword} from '..//interfaces/user-interface'
 export const RefreshAccessTokenController = async (
   req: Request,
   res: Response
@@ -20,8 +21,8 @@ export const RefreshAccessTokenController = async (
     }
 
     // Create new access token
-    const result = await pool.query('SELECT * FROM users WHERE id=$1', [
-      refreshToken.user.id,
+    const result = await pool.query<UserWithPassword>('SELECT * FROM users WHERE id=$1', [
+      refreshToken.user_id,
     ]);
     if (!result.rowCount) {
       return res.status(404).json({ message: 'User not found' });

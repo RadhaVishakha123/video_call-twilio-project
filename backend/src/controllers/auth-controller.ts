@@ -3,8 +3,11 @@ import bcrypt from 'bcrypt';
 import dotenv from 'dotenv';
 import { pool } from '..//config/db';
 import { GenerateAccessToken } from '..//service/auth';
-import { RegisterPayload, LoginPayload } from '..//interfaces/user-interface';
-import { JwtPayload } from '../interfaces/jwt-interface';
+import {
+  RegisterPayload,
+  LoginPayload,
+  UserWithPassword,
+} from '..//interfaces/user-interface';
 import {
   VerifyRefreshToken,
   CreateRefreshToken,
@@ -33,13 +36,13 @@ export async function RegisterUser(
 
     const hashPassword = await bcrypt.hash(password, 10);
 
-    const result = await pool.query<JwtPayload>(
+    const result = await pool.query<RegisterPayload>(
       `INSERT INTO users (username, email, password)
        VALUES ($1, $2, $3)
-       RETURNING id, username, email`,
+       RETURNING id, username, email,password`,
       [username, email, hashPassword]
     );
-    const user: JwtPayload = result.rows[0];
+    const user = result.rows[0];
 
     return res.status(201).json({ message: 'User registered', user });
   } catch (err: any) {
@@ -62,7 +65,7 @@ export async function LoginUser(
       return res.status(400).json({ message: 'Email & password required' });
     }
 
-    const result = await pool.query(
+    const result = await pool.query<UserWithPassword>(
       'SELECT id, username, email, password FROM users WHERE email=$1',
       [email]
     );
@@ -74,6 +77,10 @@ export async function LoginUser(
     const match = await bcrypt.compare(password, user.password);
     if (!match) {
       return res.status(400).json({ message: 'Wrong password' });
+    }
+
+    if (!user.id) {
+      throw new Error('User ID is missing from database');
     }
 
     const accessToken = await GenerateAccessToken({
@@ -110,9 +117,9 @@ export async function LogoutUser(
     if (refreshToken) {
       const payload = await VerifyRefreshToken(refreshToken);
 
-      if (payload?.userId) {
+      if (payload?.user_id) {
         await pool.query('DELETE FROM refresh_tokens WHERE user_id = $1', [
-          payload.userId,
+          payload.user_id,
         ]);
       }
     }

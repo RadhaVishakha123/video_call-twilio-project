@@ -13,7 +13,7 @@ if (!JWT_SECRET) {
 export function GenerateAccessToken(user:JwtPayload ): string {
   return jwt.sign(
     {
-      id: user._id.toString(),
+      id: user.id.toString(),
       email: user.email,
       username: user.username,
     },
