@@ -2,10 +2,12 @@ import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import dotenv from 'dotenv';
 import { pool } from '..//config/db';
-import { generateAccessToken } from '..//service/auth';
+import { GenerateAccessToken } from '..//service/auth';
+import { RegisterPayload, LoginPayload } from '..//interfaces/user-interface';
+import { JwtPayload } from '../interfaces/jwt-interface';
 import {
-  verifyRefreshToken,
-  createRefreshToken,
+  VerifyRefreshToken,
+  CreateRefreshToken,
 } from '..//service/refresh-token';
 dotenv.config();
 
@@ -15,12 +17,7 @@ export async function RegisterUser(
   res: Response
 ): Promise<Response> {
   try {
-    const { username, email, password } = req.body as {
-      username?: string;
-      email?: string;
-      password?: string;
-    };
-
+    const { username, email, password } = req.body as RegisterPayload;
     if (!email || !password || !username) {
       return res
         .status(400)
@@ -36,12 +33,13 @@ export async function RegisterUser(
 
     const hashPassword = await bcrypt.hash(password, 10);
 
-    const user = await pool.query(
+    const result = await pool.query<JwtPayload>(
       `INSERT INTO users (username, email, password)
        VALUES ($1, $2, $3)
        RETURNING id, username, email`,
       [username, email, hashPassword]
     );
+    const user: JwtPayload = result.rows[0];
 
     return res.status(201).json({ message: 'User registered', user });
   } catch (err: any) {
@@ -58,20 +56,17 @@ export async function LoginUser(
   res: Response
 ): Promise<Response> {
   try {
-    const { email, password } = req.body as {
-      email?: string;
-      password?: string;
-    };
+    const { email, password } = req.body as LoginPayload;
 
     if (!email || !password) {
       return res.status(400).json({ message: 'Email & password required' });
     }
 
-    const result: any = await pool.query(
+    const result = await pool.query(
       'SELECT id, username, email, password FROM users WHERE email=$1',
       [email]
     );
-    if (result.rowCount==0) {
+    if (result.rowCount == 0) {
       return res.status(404).json({ message: 'User not found' });
     }
     const user = result.rows[0];
@@ -81,17 +76,19 @@ export async function LoginUser(
       return res.status(400).json({ message: 'Wrong password' });
     }
 
-    const accessToken = await generateAccessToken({_id: user.id,
+    const accessToken = await GenerateAccessToken({
+      id: user.id,
       email: user.email,
-      username: user.username,});
+      username: user.username,
+    });
 
-    const refreshToken = await createRefreshToken(user.id);
+    const refreshToken = await CreateRefreshToken(user.id);
 
     return res.status(200).json({
       message: 'Login success',
       accessToken,
       refreshToken,
-      user: { _id: user.id, username: user.username, email: user.email },
+      user: { id: user.id, username: user.username, email: user.email },
     });
   } catch (err: any) {
     console.error('LOGIN ERROR:', err);
@@ -108,10 +105,10 @@ export async function LogoutUser(
   res: Response
 ): Promise<Response> {
   try {
-    const refreshToken = req.cookies?.refreshToken as string | undefined;
+    const refreshToken = req.body.refreshToken as string | undefined;
 
     if (refreshToken) {
-      const payload = await verifyRefreshToken(refreshToken);
+      const payload = await VerifyRefreshToken(refreshToken);
 
       if (payload?.userId) {
         await pool.query('DELETE FROM refresh_tokens WHERE user_id = $1', [

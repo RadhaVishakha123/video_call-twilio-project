@@ -10,7 +10,7 @@ if (!JWT_SECRET) {
 }
 
 /* ================= TOKEN GENERATORS ================= */
-export function generateAccessToken(user:JwtPayload ): string {
+export function GenerateAccessToken(user:JwtPayload ): string {
   return jwt.sign(
     {
       id: user._id.toString(),
@@ -25,7 +25,7 @@ export function generateAccessToken(user:JwtPayload ): string {
 
 
 /* ================= TOKEN VERIFY ================= */
-export function verifyAccessToken(
+export function VerifyAccessToken(
   token: string
 ): JwtPayload | null {
   try {

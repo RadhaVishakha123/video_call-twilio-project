@@ -1,13 +1,12 @@
-// utils/refresh-token.util.ts
-import crypto from 'crypto';
+import { v4 as uuidv4 } from 'uuid';
 import {pool} from '..//config/db'
 const REFRESH_TOKEN_EXPIRES_IN_DAYS = 7;
-export function generateRefreshToken(): string {
-  return crypto.randomBytes(64).toString('hex'); // secure random string
+export function GenerateRefreshToken(): string {
+  return uuidv4()
 }
 
 // services/refresh-token.service.ts
-export async function verifyRefreshToken(token: string) {
+export async function VerifyRefreshToken(token: string) {
   if (!token) return null;
 
   const result = await pool.query(`SELECT user_id, expires_at
@@ -28,10 +27,10 @@ export async function verifyRefreshToken(token: string) {
 
   return refreshToken;
 }
-export async function createRefreshToken(
+export async function CreateRefreshToken(
   userId: string
 ): Promise<string> {
-  const token = generateRefreshToken();
+  const token = GenerateRefreshToken();
 
   const expiresAt = new Date();
   expiresAt.setDate(expiresAt.getDate() + REFRESH_TOKEN_EXPIRES_IN_DAYS);
