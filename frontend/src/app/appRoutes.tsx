@@ -1,0 +1,19 @@
+import Home from './components/home/Home';
+import Login from './components/authentication/Login'
+import Register from './components/authentication/Register';
+import LayoutProject from './LayoutProject';
+import { Route, Routes } from 'react-router-dom';
+export default function AppRoutes() {
+  return (
+    <>
+      <Routes>
+        <Route path="/" element={<Login />}></Route>
+        <Route path="/login" element={<Login />}></Route>
+        <Route path="/register" element={<Register />}></Route>
+        <Route element={<LayoutProject />}>
+          <Route path="/Home" element={<Home />}></Route>
+        </Route>
+      </Routes>
+    </>
+  );
+}

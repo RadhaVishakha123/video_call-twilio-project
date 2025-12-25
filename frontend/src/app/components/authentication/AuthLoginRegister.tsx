@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Form, Input, Button, Typography, Card, App } from "antd";
 import { useNavigate } from "react-router-dom";
-import useUser from "../../../hooks/useUser";
+import useUser from "../../../hooks/useAuth";
 import { API_BASE_URL } from "../../../config";
 
 const { Title, Text } = Typography;
