@@ -8,6 +8,7 @@ export interface UserContextInterface {
   isAuthenticated: boolean;
   registerUser: (data: RegisterInterface) => Promise<boolean>;
   loginUser: (data: LoginInterface) => Promise<boolean>;
+  logoutUser:()=>void
 }
 export interface RegisterInterface {
   username: string;
@@ -17,4 +18,9 @@ export interface RegisterInterface {
 export interface LoginInterface {
   email: string;
   password: string;
+}
+export interface VideoCallProps {
+  roomName: string;
+  twilioToken: string;
+  identity: string;
 }

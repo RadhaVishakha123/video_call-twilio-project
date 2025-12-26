@@ -1,6 +1,7 @@
 import { createContext, useState, useEffect, useRef } from 'react';
 import { App } from 'antd';
-import { api } from '../services/axios';
+import axios from 'axios';
+import { API_BASE_URL } from '../config';
 import {
   UserContextInterface,
   LoginInterface,
@@ -14,6 +15,7 @@ export const AuthContext = createContext<UserContextInterface>({
   isAuthenticated: false,
   loginUser: async () => false,
   registerUser: async () => false,
+  logoutUser: async () => {},
 });
 
 export default function AuthContextProvider({
@@ -58,9 +60,14 @@ export default function AuthContextProvider({
 
   async function refreshAccessToken() {
     try {
-      const res = await api.post(
-        '/api/auth/refresh',
-        currentLoggedInUserData?.accessToken
+      const res = await axios.post(
+        `${API_BASE_URL}/api/auth/refresh`,
+        currentLoggedInUserData?.accessToken,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
       );
       const data = res.data;
 
@@ -75,9 +82,13 @@ export default function AuthContextProvider({
       setCurrentLoggedInUserData(null);
     }
   }
-
+  //login
   async function loginUser(data: LoginInterface): Promise<boolean> {
-    const res = await api.post('/api/auth/login', data);
+    const res = await axios.post(`${API_BASE_URL}/api/auth/login`, data, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
     const response = await res.data;
     if (response.message !== 'Login success') {
       message.error(response.message);
@@ -94,9 +105,13 @@ export default function AuthContextProvider({
     scheduleTokenRefresh(response.accessToken);
     return true;
   }
-
+  // register
   async function registerUser(data: RegisterInterface): Promise<boolean> {
-    const res = await api.post('/api/auth/register', data);
+    const res = await axios.post(`${API_BASE_URL}/api/auth/register`, data, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
 
     const response = await res.data;
 
@@ -108,11 +123,31 @@ export default function AuthContextProvider({
     message.success('Registration successful!');
     return true;
   }
+  // logoutUser
+  async function logoutUser() {
+    setCurrentLoggedInUserData(null);
+    if (refreshTimeout.current) {
+      clearTimeout(refreshTimeout.current);
+    }
+    await axios.post(
+      `${API_BASE_URL}/api/auth/logout`,
+      currentLoggedInUserData?.accessToken,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+  }
 
   /* ================= AUTO LOGIN ON APP LOAD ================= */
 
   useEffect(() => {
-    refreshAccessToken();
+    if (currentLoggedInUserData?.accessToken) {
+      scheduleTokenRefresh(currentLoggedInUserData.accessToken);
+    } else {
+      refreshAccessToken();
+    }
 
     return () => {
       if (refreshTimeout.current) {
@@ -129,6 +164,7 @@ export default function AuthContextProvider({
         isAuthenticated,
         loginUser,
         registerUser,
+        logoutUser,
       }}
     >
       {children}
