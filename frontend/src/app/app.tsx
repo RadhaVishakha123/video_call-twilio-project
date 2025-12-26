@@ -1,10 +1,15 @@
-import NxWelcome from './nx-welcome';
-
-export function App() {
+import AuthContextProvider from '../contexts/AuthContext';
+import AppRoutes from './appRoutes';
+import { BrowserRouter } from 'react-router-dom';
+function App() {
   return (
-    <div>
-      <NxWelcome title="@org/frontend" />
-    </div>
+    <>
+      <BrowserRouter>
+        <AuthContextProvider>
+          <AppRoutes />
+        </AuthContextProvider>
+      </BrowserRouter>
+    </>
   );
 }
 
