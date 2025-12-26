@@ -1,5 +1,8 @@
 import { AccessToken, VideoGrant } from '../config/twilio';
 import { Request, Response } from 'express';
+import dotenv from 'dotenv';
+dotenv.config();
+
 export const generateToken = (req: Request, res: Response) => {
   const { identity } = req.body;
   if (!identity) {
@@ -16,5 +19,5 @@ export const generateToken = (req: Request, res: Response) => {
   const videoGrant = new VideoGrant();
   token.addGrant(videoGrant);
   const accessToken = token.toJwt(); //Converts token into a JWT string
-  res.status(200).json({ accessToken });
+  return res.status(200).json({ accessToken });
 };

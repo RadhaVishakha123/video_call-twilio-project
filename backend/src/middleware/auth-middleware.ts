@@ -1,11 +1,9 @@
-import { Request, Response, NextFunction } from 'express';
-import { verifyToken } from '../config/jwt';
+import { Response, NextFunction } from 'express';
+import { VerifyAccessToken } from '../service/auth';
 import { JwtPayload } from '../interfaces/jwt-interface';
+import { AuthRequest } from '../interfaces/jwt-interface';
 
-export interface AuthRequest extends Request {
-  user?: JwtPayload;
-}
-export const authenticate = (
+export const Authenticate = (
   req: AuthRequest,
   res: Response,
   next: NextFunction
@@ -19,11 +17,13 @@ export const authenticate = (
 
   const token = authHeader.split(' ')[1];
 
-  try {
-    const decoded = verifyToken(token);
-    req.user = decoded;
-    next();
-  } catch {
+  const decoded = VerifyAccessToken(token) as JwtPayload | null;
+
+  if (!decoded) {
     res.status(401).json({ error: 'Invalid token' });
+    return;
   }
+
+  req.user = decoded; // Type matches now
+  next();
 };
