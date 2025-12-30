@@ -1,3 +1,5 @@
+import Video, { Room, RemoteParticipant, LocalParticipant } from 'twilio-video';
+
 export interface User {
   accessToken: string;
   user: any;
@@ -8,7 +10,7 @@ export interface UserContextInterface {
   isAuthenticated: boolean;
   registerUser: (data: RegisterInterface) => Promise<boolean>;
   loginUser: (data: LoginInterface) => Promise<boolean>;
-  logoutUser:()=>void
+  logoutUser: () => void;
 }
 export interface RegisterInterface {
   username: string;
@@ -20,7 +22,21 @@ export interface LoginInterface {
   password: string;
 }
 export interface VideoCallProps {
-  roomName: string;
-  twilioToken: string;
-  identity: string;
+  videoEnabled: boolean;
+  audioEnabled: boolean;
+  selectedCamera?: string;
+  selectedMic?: string;
+  setIsJoining: React.Dispatch<React.SetStateAction<boolean>>;
+}
+export interface MeetingContextType {
+  room: Room | null;
+  roomName: string | null;
+  twilioToken: string | null;
+  setTwilioToken: React.Dispatch<React.SetStateAction<string | null>>;
+  setRoomName: React.Dispatch<React.SetStateAction<string | null>>;
+  localParticipant: LocalParticipant | null;
+  remoteParticipants: RemoteParticipant[];
+  joinRoom: (video: boolean, audio: boolean, cameraId?: string, micId?: string) => Promise<void>;
+  disconnectCall: () => void;
+  cancelMeeting: () => void;
 }
