@@ -32,6 +32,12 @@ export default function AuthContextProvider({
   const isAuthenticated = !!currentLoggedInUserData;
 
   /* ================= HELPERS ================= */
+  function getCookie(name: string) {
+    return document.cookie
+      .split('; ')
+      .find((row) => row.startsWith(name + '='))
+      ?.split('=')[1];
+  }
 
   function getTokenIssueTime(token: string) {
     try {
@@ -62,7 +68,7 @@ export default function AuthContextProvider({
     try {
       const res = await axios.post(
         `${API_BASE_URL}/api/auth/refresh`,
-        currentLoggedInUserData?.accessToken,
+        { refreshToken: getCookie('refreshToken') },
         {
           headers: {
             'Content-Type': 'application/json',
@@ -101,6 +107,9 @@ export default function AuthContextProvider({
       user: response.user,
       accessToken: response.accessToken,
     });
+    document.cookie = `refreshToken=${response.refreshToken}; Path=/; Max-Age=${
+      7 * 24 * 60 * 60
+    }`;
 
     scheduleTokenRefresh(response.accessToken);
     return true;
@@ -131,7 +140,7 @@ export default function AuthContextProvider({
     }
     await axios.post(
       `${API_BASE_URL}/api/auth/logout`,
-      currentLoggedInUserData?.accessToken,
+      { refreshToken: getCookie('refreshToken') },
       {
         headers: {
           'Content-Type': 'application/json',
