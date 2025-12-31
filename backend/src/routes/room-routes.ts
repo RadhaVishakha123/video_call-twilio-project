@@ -1,9 +1,6 @@
 import { Router } from 'express';
-import { createRoom } from '../controllers/room-controller';
-import { authenticate } from '../middleware/auth-middleware';
-
+import { JoinOrCreateRoom,getActiveAndRecentRooms } from '../controllers/room-controller';
 const router = Router();
-
-router.post('/room', authenticate, createRoom);
-
+router.post('/', JoinOrCreateRoom);
+router.get('/', getActiveAndRecentRooms);
 export default router;
