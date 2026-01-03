@@ -65,8 +65,8 @@ export default function VideoCall({
       }
     });
   };
-  function handleLeaveRoom() {
-    disconnectCall();
+  async function handleLeaveRoom() {
+    await disconnectCall();
     setIsJoining(false);
     navigate('/waiting-room');
   }
@@ -83,9 +83,9 @@ export default function VideoCall({
     };
     joinVideo();
 
-    return () => {
-      disconnectCall();
-    };
+    // return () => {
+    //   disconnectCall();
+    // };
   }, []);
 
   const totalParticipants = remoteParticipants.length + 1;

@@ -174,7 +174,7 @@ export default function MeetingContextProvider({
 
   const disconnectCall = () => {
     if (!room) return;
-    room.disconnect();
+    room?.disconnect();
     room?.localParticipant.tracks.forEach((pub) => {
       const track = pub.track;
       if (track && (track.kind === 'video' || track.kind === 'audio')) {
