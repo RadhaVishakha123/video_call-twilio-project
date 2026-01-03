@@ -23,9 +23,9 @@ export default function MediaSettings() {
           value={selectedCamera}
           onChange={setSelectedCamera}
         >
-          {cameras.map((cam) => (
-            <Option key={cam.deviceId} value={cam.deviceId}>
-              {cam.label || 'Camera'}
+          {cameras?.map((cam) => (
+            <Option key={cam?.deviceId} value={cam?.deviceId}>
+              {cam?.label || 'Camera'}
             </Option>
           ))}
         </Select>
