@@ -39,9 +39,9 @@ export default function MediaSettings() {
           value={selectedMic}
           onChange={setSelectedMic}
         >
-          {microphones.map((mic) => (
-            <Option key={mic.deviceId} value={mic.deviceId}>
-              {mic.label || 'Microphone'}
+          {microphones?.map((mic) => (
+            <Option key={mic?.deviceId} value={mic?.deviceId}>
+              {mic?.label || 'Microphone'}
             </Option>
           ))}
         </Select>

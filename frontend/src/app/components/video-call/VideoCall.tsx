@@ -102,7 +102,7 @@ export default function VideoCall({
       {/* VIDEO AREA */}
       <div className="flex-1 overflow-hidden">
         <div className={`grid gap-4 w-full h-full ${gridCols}`}>
-          {remoteParticipants.map((p) => (
+          {remoteParticipants?.map((p) => (
             <RemoteParticipant key={p.sid} participant={p} />
           ))}
 
