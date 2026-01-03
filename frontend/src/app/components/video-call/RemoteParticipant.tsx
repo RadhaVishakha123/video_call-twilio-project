@@ -37,7 +37,7 @@ export default function RemoteParticipant({ participant }: Props) {
     };
 
     const detachVideo = (track: RemoteVideoTrack) => {
-      track.detach().forEach((el) => el.remove());
+      track?.detach().forEach((el) => el.remove());
       setIsCameraOn(false);
     };
 
@@ -49,10 +49,10 @@ export default function RemoteParticipant({ participant }: Props) {
     };
 
     // Existing tracks
-    participant.videoTracks.forEach(
+    participant?.videoTracks.forEach(
       (pub) => pub.track && attachVideo(pub.track)
     );
-    participant.audioTracks.forEach(
+    participant?.audioTracks.forEach(
       (pub) => pub.track && handleAudioTrack(pub.track)
     );
 

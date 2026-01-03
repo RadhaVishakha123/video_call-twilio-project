@@ -79,19 +79,15 @@ export default function MeetingContextProvider({
       });
       setRoom(joinedRoom);
       setLocalParticipant(joinedRoom.localParticipant);
-      console.log(
-        'Existing participants:',
-        Array.from(joinedRoom.participants.values()).map((p) => p.identity)
-      );
 
       if (!video) {
-        joinedRoom.localParticipant.videoTracks.forEach((pub) => {
-          pub.track.disable();
+        joinedRoom?.localParticipant?.videoTracks.forEach((pub) => {
+          pub.track?.disable();
         });
       }
       if (!audio) {
         joinedRoom.localParticipant.audioTracks.forEach((pub) => {
-          pub.track.disable();
+          pub.track?.disable();
         });
       }
       // Handle already connected participants
@@ -178,8 +174,8 @@ export default function MeetingContextProvider({
     room?.localParticipant.tracks.forEach((pub) => {
       const track = pub.track;
       if (track && (track.kind === 'video' || track.kind === 'audio')) {
-        track.stop();
-        track.detach().forEach((el) => el.remove());
+        track?.stop();
+        track?.detach().forEach((el) => el.remove());
       }
     });
     setRoom(null);

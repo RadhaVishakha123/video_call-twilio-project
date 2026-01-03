@@ -30,7 +30,7 @@ export default function LocalParticipant({
     };
 
     // Existing track
-    localParticipant.videoTracks.forEach((pub) => {
+    localParticipant?.videoTracks.forEach((pub) => {
       if (pub.track) {
         currentTrack = pub.track;
         attach(pub.track);

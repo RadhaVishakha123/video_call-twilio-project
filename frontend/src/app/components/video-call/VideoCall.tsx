@@ -31,22 +31,22 @@ export default function VideoCall({
   } = useMeeting();
   useEffect(() => {
     if (!localParticipant) return;
-    localParticipant.videoTracks.forEach((pub) =>
+    localParticipant?.videoTracks.forEach((pub) =>
       setIsCameraOn(pub.track.isEnabled)
     );
-    localParticipant.audioTracks.forEach((pub) =>
+    localParticipant?.audioTracks.forEach((pub) =>
       setIsMicOn(pub.track.isEnabled)
     );
   }, [localParticipant]);
   const handleToggleCamera = () => {
     if (!localParticipant) return;
-    localParticipant.videoTracks.forEach((pub) => {
+    localParticipant?.videoTracks.forEach((pub) => {
       if (!pub.track) return;
       if (pub.track.isEnabled) {
-        pub.track.disable();
+        pub?.track.disable();
         setIsCameraOn(false);
       } else {
-        pub.track.enable();
+        pub?.track.enable();
         setIsCameraOn(true);
       }
     });
@@ -54,13 +54,13 @@ export default function VideoCall({
 
   const handleToggleMic = () => {
     if (!localParticipant) return;
-    localParticipant.audioTracks.forEach((pub) => {
+    localParticipant?.audioTracks.forEach((pub) => {
       if (!pub.track) return;
       if (pub.track.isEnabled) {
-        pub.track.disable();
+        pub?.track.disable();
         setIsMicOn(false);
       } else {
-        pub.track.enable();
+        pub?.track.enable();
         setIsMicOn(true);
       }
     });
