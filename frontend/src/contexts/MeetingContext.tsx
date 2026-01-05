@@ -2,6 +2,7 @@ import { createContext, useState } from 'react';
 import { App } from 'antd';
 import Video, { Room, RemoteParticipant, LocalParticipant } from 'twilio-video';
 import { MeetingContextType } from '..//helper/type';
+import { useEffect } from 'react';
 export const MeetingContext = createContext<MeetingContextType>({
   room: null,
   roomName: null,
@@ -13,6 +14,12 @@ export const MeetingContext = createContext<MeetingContextType>({
   joinRoom: async () => {},
   disconnectCall: () => {},
   cancelMeeting: () => {},
+  cameras: [],
+  microphones: [],
+  selectedCamera: undefined,
+  setSelectedCamera: () => {},
+  selectedMic: undefined,
+  setSelectedMic: () => {},
 });
 export default function MeetingContextProvider({
   children,
@@ -28,13 +35,13 @@ export default function MeetingContextProvider({
   const [remoteParticipants, setRemoteParticipants] = useState<
     RemoteParticipant[]
   >([]);
+  // device states
+  const [cameras, setCameras] = useState<MediaDeviceInfo[]>([]);
+  const [microphones, setMicrophones] = useState<MediaDeviceInfo[]>([]);
+  const [selectedCamera, setSelectedCamera] = useState<string>();
+  const [selectedMic, setSelectedMic] = useState<string>();
 
-  const joinRoom = async (
-    video: boolean,
-    audio: boolean,
-    cameraId?: string,
-    micId?: string
-  ) => {
+  const joinRoom = async (video: boolean, audio: boolean) => {
     try {
       if (!twilioToken || !roomName) {
         appMessage.error('Missing room name or Twilio token');
@@ -44,19 +51,54 @@ export default function MeetingContextProvider({
         console.warn('Already connected to a room');
         return;
       }
+      if (selectedCamera === undefined && video) {
+        appMessage.error('Please select a camera');
+        return;
+      }
+      if (selectedMic === undefined && audio) {
+        appMessage.error('Please select a microphone');
+        return;
+      }
+      const tracks = [];
+      if (selectedCamera) {
+        const videoTrack = await Video.createLocalVideoTrack({
+          deviceId: { exact: selectedCamera },
+        });
+        tracks.push(videoTrack);
+      }
+      if (selectedMic) {
+        const audioTrack = await Video.createLocalAudioTrack({
+          deviceId: { exact: selectedMic },
+        });
+        tracks.push(audioTrack);
+      }
 
       const joinedRoom = await Video.connect(twilioToken as string, {
         name: roomName as string,
-        video: video ? { deviceId: cameraId } : false,
-        audio: audio ? { deviceId: micId } : false,
+        tracks: tracks,
       });
       setRoom(joinedRoom);
       setLocalParticipant(joinedRoom.localParticipant);
 
+      if (!video) {
+        joinedRoom?.localParticipant?.videoTracks.forEach((pub) => {
+          pub.track?.disable();
+        });
+      }
+      if (!audio) {
+        joinedRoom.localParticipant.audioTracks.forEach((pub) => {
+          pub.track?.disable();
+        });
+      }
       // Handle already connected participants
       setRemoteParticipants(Array.from(joinedRoom.participants.values()));
       joinedRoom.on('participantConnected', (participant) => {
-        setRemoteParticipants((prev) => [...prev, participant]);
+        setRemoteParticipants((prev) => {
+          const exists = prev.find((p) => p.sid == participant.sid);
+          if (exists) return prev;
+          return [...prev, participant];
+        });
+        // setRemoteParticipants((prev) => [...prev, participant]);
       });
 
       // When a participant leaves
@@ -67,17 +109,75 @@ export default function MeetingContextProvider({
       });
     } catch (err) {
       console.error('Error joining Twilio room:', err);
+      appMessage.error('Failed to join meeting');
     }
   };
+  useEffect(() => {
+    if (!room || !selectedCamera) return;
+
+    const switchCamera = async () => {
+      const participant = room.localParticipant;
+      const oldPub = Array.from(participant.videoTracks.values())[0];
+      if (!oldPub?.track) return;
+
+      const wasEnabled = oldPub.track.isEnabled;
+
+      const newTrack = await Video.createLocalVideoTrack({
+        deviceId: { exact: selectedCamera },
+      });
+
+      participant.unpublishTrack(oldPub.track);
+
+      if (!wasEnabled) {
+        newTrack.disable();
+      } else {
+        newTrack.enable(); //  important
+      }
+
+      await participant.publishTrack(newTrack);
+    };
+
+    switchCamera();
+  }, [selectedCamera, room]);
+
+  useEffect(() => {
+    if (!room || !selectedMic) return;
+
+    const switchMic = async () => {
+      const participant = room.localParticipant;
+      const oldPub = Array.from(participant.audioTracks.values())[0];
+      if (!oldPub?.track) return;
+
+      const wasEnabled = oldPub.track.isEnabled;
+
+      const newTrack = await Video.createLocalAudioTrack({
+        deviceId: { exact: selectedMic },
+      });
+
+      participant.unpublishTrack(oldPub.track);
+
+      if (!wasEnabled) {
+        newTrack.disable();
+      } else {
+        newTrack.enable();
+      }
+
+      await participant.publishTrack(newTrack);
+    };
+
+    switchMic();
+  }, [selectedMic, room]);
+
   const disconnectCall = () => {
+    if (!room) return;
+    room?.disconnect();
     room?.localParticipant.tracks.forEach((pub) => {
       const track = pub.track;
       if (track && (track.kind === 'video' || track.kind === 'audio')) {
-        track.stop();
-        track.detach().forEach((el) => el.remove());
+        track?.stop();
+        track?.detach().forEach((el) => el.remove());
       }
     });
-    room?.disconnect();
     setRoom(null);
     setLocalParticipant(null);
     setRemoteParticipants([]);
@@ -87,6 +187,26 @@ export default function MeetingContextProvider({
     setRoomName(null);
     setTwilioToken(null);
   };
+  useEffect(() => {
+    const loadDevices = async () => {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+
+      const cams = devices.filter((d) => d.kind === 'videoinput');
+      const mics = devices.filter((d) => d.kind === 'audioinput');
+      console.log('camre', cams);
+      console.log('cam', cams[0].deviceId);
+
+      setCameras(cams);
+      setMicrophones(mics);
+      console.log('camera:', cams);
+      console.log('mics:', mics);
+
+      setSelectedCamera(cams[0]?.deviceId);
+      setSelectedMic(mics[0]?.deviceId);
+    };
+
+    loadDevices();
+  }, []);
   return (
     <MeetingContext.Provider
       value={{
@@ -100,6 +220,12 @@ export default function MeetingContextProvider({
         joinRoom,
         disconnectCall,
         cancelMeeting,
+        cameras,
+        microphones,
+        selectedCamera,
+        setSelectedCamera,
+        selectedMic,
+        setSelectedMic,
       }}
     >
       {children}

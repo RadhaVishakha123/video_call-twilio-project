@@ -24,8 +24,6 @@ export interface LoginInterface {
 export interface VideoCallProps {
   videoEnabled: boolean;
   audioEnabled: boolean;
-  selectedCamera?: string;
-  selectedMic?: string;
   setIsJoining: React.Dispatch<React.SetStateAction<boolean>>;
 }
 export interface MeetingContextType {
@@ -36,7 +34,17 @@ export interface MeetingContextType {
   setRoomName: React.Dispatch<React.SetStateAction<string | null>>;
   localParticipant: LocalParticipant | null;
   remoteParticipants: RemoteParticipant[];
-  joinRoom: (video: boolean, audio: boolean, cameraId?: string, micId?: string) => Promise<void>;
+  joinRoom: (video: boolean, audio: boolean) => Promise<void>;
   disconnectCall: () => void;
   cancelMeeting: () => void;
+  cameras: MediaDeviceInfo[];
+  microphones: MediaDeviceInfo[];
+  selectedCamera: string | undefined;
+  setSelectedCamera: React.Dispatch<React.SetStateAction<string | undefined>>;
+  selectedMic: string | undefined;
+  setSelectedMic: React.Dispatch<React.SetStateAction<string | undefined>>;
+}
+export interface LocalParticipantProps {
+  isCameraOn: boolean;
+  isMicOn: boolean;
 }

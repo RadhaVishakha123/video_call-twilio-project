@@ -1,4 +1,4 @@
-import { Button, Typography, Select, Switch } from 'antd';
+import { Button, Typography, Select } from 'antd';
 import { useEffect, useRef, useState } from 'react';
 import useMeeting from '../../../hooks/useMeeting';
 import useAuth from '../../../hooks/useAuth';
@@ -11,11 +11,11 @@ import {
   AudioMutedOutlined,
 } from '@ant-design/icons';
 import VideoCall from '../video-call/VideoCall';
+import MediaSettings from '../setting/MediaSettings';
 const { Title, Text } = Typography;
-const { Option } = Select;
-
 export default function WaitingRoom() {
-  const { roomName, twilioToken, cancelMeeting } = useMeeting();
+  const { roomName, twilioToken, cancelMeeting, selectedCamera, selectedMic } =
+    useMeeting();
   const { currentLoggedInUserData } = useAuth();
   const userName = currentLoggedInUserData?.user.username;
   const message = App.useApp().message;
@@ -27,57 +27,42 @@ export default function WaitingRoom() {
 
   const [videoEnabled, setVideoEnabled] = useState(true);
   const [audioEnabled, setAudioEnabled] = useState(true);
-  const [cameras, setCameras] = useState<MediaDeviceInfo[]>([]);
-  const [microphones, setMicrophones] = useState<MediaDeviceInfo[]>([]);
-  const [selectedCamera, setSelectedCamera] = useState<string>();
-  const [selectedMic, setSelectedMic] = useState<string>();
   const [isjoining, setIsJoining] = useState(false);
   const navigate = useNavigate();
-  //  Load devices + preview
-  useEffect(() => {
-    const initDevices = async () => {
-      const devices = await navigator.mediaDevices.enumerateDevices();
 
-      const cams = devices.filter((d) => d.kind === 'videoinput');
-      const mics = devices.filter((d) => d.kind === 'audioinput');
-
-      setCameras(cams);
-      setMicrophones(mics);
-
-      setSelectedCamera(cams[0]?.deviceId);
-      setSelectedMic(mics[0]?.deviceId);
-    };
-
-    initDevices();
-  }, []);
-
-  // Start preview
   useEffect(() => {
     const startPreview = async () => {
-      if (!videoEnabled && !audioEnabled) {
-        streamRef.current?.getTracks().forEach((t) => t.stop());
-        if (videoRef.current) {
-          videoRef.current.srcObject = null;
+      try {
+        if (!videoEnabled && !audioEnabled) {
+          streamRef.current?.getTracks().forEach((t) => t.stop());
+          if (videoRef.current) videoRef.current.srcObject = null;
+          return;
         }
-        return;
-      }
 
-      if (!selectedCamera && !selectedMic) {
-        message.error('Please select a camera and microphone');
-        return;
-      }
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: videoEnabled
+            ? selectedCamera
+              ? { deviceId: { exact: selectedCamera } }
+              : true
+            : false,
+          audio: audioEnabled
+            ? selectedMic
+              ? { deviceId: { exact: selectedMic } }
+              : true
+            : false,
+        });
 
-      streamRef.current?.getTracks().forEach((t) => t.stop());
+        const oldStream = streamRef.current;
+        streamRef.current = stream;
 
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: videoEnabled ? { deviceId: selectedCamera } : false,
-        audio: audioEnabled ? { deviceId: selectedMic } : false,
-      });
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          await videoRef.current.play().catch(() => {});
+        }
 
-      streamRef.current = stream;
-
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
+        oldStream?.getTracks().forEach((t) => t.stop());
+      } catch (err) {
+        console.error('Preview error:', err);
       }
     };
 
@@ -87,7 +72,12 @@ export default function WaitingRoom() {
       streamRef.current?.getTracks().forEach((t) => t.stop());
     };
   }, [selectedCamera, selectedMic, videoEnabled, audioEnabled]);
+
   const handleJoin = async () => {
+    if (!selectedCamera && !selectedMic) {
+      message.error('Please select a camera and microphone');
+      return;
+    }
     streamRef.current?.getTracks().forEach((t) => t.stop());
     setIsJoining(true);
   };
@@ -100,8 +90,6 @@ export default function WaitingRoom() {
       <VideoCall
         videoEnabled={videoEnabled}
         audioEnabled={audioEnabled}
-        selectedCamera={selectedCamera}
-        selectedMic={selectedMic}
         setIsJoining={setIsJoining}
       />
     );
@@ -173,38 +161,8 @@ export default function WaitingRoom() {
               Room: {roomName}
             </Text>
           </div>
+          <MediaSettings />
 
-          {/* Camera select */}
-          <div>
-            <Text strong>Camera</Text>
-            <Select
-              className="w-full mt-1"
-              value={selectedCamera}
-              onChange={setSelectedCamera}
-            >
-              {cameras.map((cam) => (
-                <Option key={cam.deviceId} value={cam.deviceId}>
-                  {cam.label || 'Camera'}
-                </Option>
-              ))}
-            </Select>
-          </div>
-
-          {/* Mic select */}
-          <div>
-            <Text strong>Microphone</Text>
-            <Select
-              className="w-full mt-1"
-              value={selectedMic}
-              onChange={setSelectedMic}
-            >
-              {microphones.map((mic) => (
-                <Option key={mic.deviceId} value={mic.deviceId}>
-                  {mic.label || 'Microphone'}
-                </Option>
-              ))}
-            </Select>
-          </div>
           {/* Join */}
           <div className=" flex gap-3">
             <Button
