@@ -36,7 +36,7 @@ export default function Header() {
   ];
 
   return (
-    <AntHeader className="relative z-50 flex items-center justify-between px-6 bg-white/10 backdrop-blur-md shadow-md">
+    <AntHeader className="sticky top-0 z-50 flex items-center justify-between px-6 bg-white  shadow-md">
 
   {/* Left */}
   <div className="text-black font-bold text-xl tracking-wide">

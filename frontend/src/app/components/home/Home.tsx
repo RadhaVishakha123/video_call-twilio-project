@@ -1,4 +1,4 @@
-import React, { use, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Card,
   Input,
@@ -37,7 +37,6 @@ const Home: React.FC = () => {
   const { setRoomName, setTwilioToken } = useMeeting();
   const [rooms, setRooms] = useState<Room[]>([]);
   const accessToken = currentLoggedInUserData?.accessToken as string;
-  const userName = currentLoggedInUserData?.user.username;
   const currLogedInUserId = currentLoggedInUserData?.user.id;
 
   const handleJoinRoom = async (targetRoomName?: string) => {
@@ -95,19 +94,19 @@ const Home: React.FC = () => {
   }, []);
 
   return (
-    <div className="min-h-screen">
+    <div className="">
       {/* Background Decor */}
-      <div className="absolute top-0 right-0 w-1/3 h-screen " />
+      <div className="absolute top-0 right-0 w-1/3  " />
 
       <div className="max-w-7xl mx-auto px-6 pt-16 ">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
           {/* LEFT: CTA Section */}
-          <div className="lg:col-span-7 bg-white/10 backdrop-blur-3 rounded-xl p-6">
+          <div className="lg:col-span-7 bg-white  rounded-xl p-6">
             <Title level={1} className="text-5xl font-extrabold mb-4 ">
               Premium video meetings. <br />
               <span className="text-blue-600">Now free for everyone.</span>
             </Title>
-            <Text className="text-lg text-white block mb-10 max-w-xl">
+            <Text className="text-lg text-slate-600 block mb-10 max-w-xl">
               We re-engineered the service we built for secure business
               meetings, VideoConnect, to make it free and available for all.
             </Text>
@@ -140,13 +139,13 @@ const Home: React.FC = () => {
                 <Title level={4} className="m-0">
                   100%
                 </Title>
-                <Text className="text-white">Encrypted</Text>
+                <Text className="text-black">Encrypted</Text>
               </div>
               <div>
                 <Title level={4} className="m-0">
                   HD
                 </Title>
-                <Text className="text-white">Quality</Text>
+                <Text className="text-black">Quality</Text>
               </div>
             </div>
           </div>
@@ -205,6 +204,9 @@ const Home: React.FC = () => {
               />
             </Card>
           </div>
+        </div>
+        <div>
+          <ImageCarousel />
         </div>
       </div>
     </div>

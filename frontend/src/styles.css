@@ -2,3 +2,38 @@
 @tailwind components;
 @tailwind utilities;
 /* You can add global styles to this file, and also import other style files */
+.custom-carousel.ant-carousel .slick-prev,
+.custom-carousel.ant-carousel .slick-next {
+  width: 40px;
+  height: 40px;
+  background-color: black !important;
+  border-radius: 50%;
+  opacity: 1 !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+/* .custom-carousel.ant-carousel .slick-prev::before,
+.custom-carousel.ant-carousel .slick-next::before {
+  color: white !important;
+  font-size: 18px;
+} */
+:where(.css-dev-only-do-not-override-1cu181t).ant-carousel .slick-prev, :where(.css-dev-only-do-not-override-1cu181t).ant-carousel .slick-next{
+    color: black !important;
+}
+.custom-carousel .slick-dots li button {
+  background: black !important;
+  height: 4px;
+  width: 20px;
+  border-radius: 999px;
+}
+
+.custom-carousel .slick-dots li.slick-active button {
+  opacity: 1;
+}
+
+.custom-carousel .slick-dots li button::before {
+  display: none;
+}
