@@ -12,6 +12,7 @@ import {
   AudioMutedOutlined,
   UserOutlined,
 } from '@ant-design/icons';
+import { RoomUser } from '../../../helper/type';
 import { getInitials } from '../../../helper/utility';
 import { API_BASE_URL } from '../../../config';
 import axios from 'axios';
@@ -22,7 +23,8 @@ const { Title, Text } = Typography;
 export default function WaitingRoom() {
   const { roomName, twilioToken, cancelMeeting, selectedCamera, selectedMic } =
     useMeeting();
-  const [joinedUsers, setJoinedUsers] = useState<string[]>([]);
+  
+  const [joinedUsers, setJoinedUsers] = useState<RoomUser[]>([]);
   const { currentLoggedInUserData } = useAuth();
   const accessToken = currentLoggedInUserData?.accessToken as string;
   const userName = currentLoggedInUserData?.user.username;
@@ -146,6 +148,7 @@ export default function WaitingRoom() {
         videoEnabled={videoEnabled}
         audioEnabled={audioEnabled}
         setIsJoining={setIsJoining}
+        joinedUsers={joinedUsers}
       />
     );
   }
@@ -239,14 +242,14 @@ export default function WaitingRoom() {
                 }}
               >
                 {joinedUsers?.map((user, index) => (
-                  <Tooltip title={user} key={index} placement="top">
+                  <Tooltip title={user?.username} key={index} placement="top">
                     <Avatar
                       style={{
                         backgroundColor: '#1890ff',
                         fontWeight: 1200,
                       }}
                     >
-                      {getInitials(user)}
+                      {getInitials(user.username)}
                     </Avatar>
                   </Tooltip>
                 ))}

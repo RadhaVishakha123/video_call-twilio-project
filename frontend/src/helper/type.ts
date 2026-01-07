@@ -21,10 +21,15 @@ export interface LoginInterface {
   email: string;
   password: string;
 }
+export interface RoomUser {
+  userId: string;
+  username: string;
+}
 export interface VideoCallProps {
   videoEnabled: boolean;
   audioEnabled: boolean;
   setIsJoining: React.Dispatch<React.SetStateAction<boolean>>;
+  joinedUsers: RoomUser[];
 }
 export interface MeetingContextType {
   room: Room | null;
