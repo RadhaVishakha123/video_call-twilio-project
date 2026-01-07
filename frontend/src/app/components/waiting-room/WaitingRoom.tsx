@@ -238,7 +238,7 @@ export default function WaitingRoom() {
                   },
                 }}
               >
-                {joinedUsers.map((user, index) => (
+                {joinedUsers?.map((user, index) => (
                   <Tooltip title={user} key={index} placement="top">
                     <Avatar
                       style={{
