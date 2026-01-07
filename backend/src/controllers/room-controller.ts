@@ -3,6 +3,7 @@ import { twilioClient } from '../config/twilio';
 import { pool } from '../config/db';
 import { AuthRequest } from '../interfaces/jwt-interface';
 import { EmitRoomStatus, EmitRoomUsers } from '../socket/emit';
+import { RoomUser } from '../interfaces/room-interface';
 export const JoinOrCreateRoom = async (
   req: AuthRequest,
   res: Response
@@ -47,7 +48,7 @@ export const JoinOrCreateRoom = async (
     //   [roomId, userId]
     // );
     await UpdateRoomActiveStatus(roomId as string, roomName);
-    const user = await getRoomUsers(roomId);
+    const user: RoomUser[] = await getRoomUsers(roomId);
     EmitRoomUsers(roomName, user);
     res.status(200).json({
       message: 'Joined room successfully',
@@ -94,7 +95,7 @@ export const JoinRoomParticipant = async (
 
     await UpdateRoomActiveStatus(roomId, roomName);
 
-    const users = await getRoomUsers(roomId);
+    const users: RoomUser[] = await getRoomUsers(roomId);
     EmitRoomUsers(roomName, users);
 
     res.status(200).json({ message: 'User joined room', users });
@@ -174,7 +175,7 @@ export const LeaveRoom = async (
     );
 
     await UpdateRoomActiveStatus(roomId as string, roomName);
-    const user = await getRoomUsers(roomId);
+    const user: RoomUser[] = await getRoomUsers(roomId);
     EmitRoomUsers(roomName, user);
 
     res.status(200).json({
@@ -234,7 +235,7 @@ export const UpdateRoomActiveStatus = async (
 const getRoomUsers = async (roomId: string) => {
   const res = await pool.query(
     `
-    SELECT u.username
+    SELECT rp.user_id, u.username
     FROM room_participants rp
     JOIN users u ON u.id = rp.user_id
     WHERE rp.room_id = $1
@@ -242,8 +243,12 @@ const getRoomUsers = async (roomId: string) => {
     [roomId]
   );
 
-  return res.rows.map((r) => r.username);
+  return res.rows.map((r) => ({
+    userId: r.user_id,
+    username: r.username,
+  }));
 };
+
 export const GetRoomUsers = async (
   req: AuthRequest,
   res: Response
@@ -267,7 +272,7 @@ export const GetRoomUsers = async (
 
     const roomId = roomRes.rows[0].id;
 
-    const users = await getRoomUsers(roomId);
+    const users: RoomUser[] = await getRoomUsers(roomId);
 
     //  Emit for OTHER clients
     EmitRoomUsers(roomName, users);
