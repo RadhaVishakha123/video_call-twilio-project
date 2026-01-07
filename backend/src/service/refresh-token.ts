@@ -1,9 +1,12 @@
-import { v4 as uuidv4 } from 'uuid';
-import {pool} from '..//config/db'
+
+import { pool } from '../config/db'
 import { IRefreshToken } from '../interfaces/token-interface';
+import { v4 as uuidv4 } from 'uuid';
+
 const REFRESH_TOKEN_EXPIRES_IN_DAYS = 7;
 export function GenerateRefreshToken(): string {
-  return uuidv4()
+  const myNewUuid = uuidv4();
+  return myNewUuid;
 }
 export async function VerifyRefreshToken(token: string) {
   if (!token) return null;
