@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState,useMemo } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
 import LocalParticipant from './LocalParticipant';
 import RemoteParticipant from './RemoteParticipant';
 import {
@@ -21,8 +21,7 @@ import axios from 'axios';
 export default function VideoCall({
   videoEnabled,
   audioEnabled,
-  setIsJoining,
-  joinedUsers
+  joinedUsers,
 }: VideoCallProps) {
   const [isCameraOn, setIsCameraOn] = useState(videoEnabled);
   const [isMicOn, setIsMicOn] = useState(audioEnabled);
@@ -36,6 +35,7 @@ export default function VideoCall({
     joinRoom,
     roomName,
     disconnectCall,
+    setIsJoining,
   } = useMeeting();
   useEffect(() => {
     if (!localParticipant) return;
@@ -105,13 +105,12 @@ export default function VideoCall({
     // };
   }, []);
   const userMap = useMemo(() => {
-  const map: Record<string, string> = {};
-  joinedUsers.forEach((u) => {
-    map[u.userId] = u.username;
-  });
-  return map;
-}, [joinedUsers]);
-
+    const map: Record<string, string> = {};
+    joinedUsers.forEach((u) => {
+      map[u.userId] = u.username;
+    });
+    return map;
+  }, [joinedUsers]);
 
   const totalParticipants = remoteParticipants.length + 1;
   const gridCols =
@@ -128,7 +127,11 @@ export default function VideoCall({
       <div className="flex-1 overflow-hidden">
         <div className={`grid gap-4 w-full h-full ${gridCols}`}>
           {remoteParticipants?.map((p) => (
-            <RemoteParticipant key={p.sid} participant={p} username={userMap[p.identity]}/>
+            <RemoteParticipant
+              key={p.sid}
+              participant={p}
+              username={userMap[p.identity]}
+            />
           ))}
 
           <LocalParticipant isCameraOn={isCameraOn} isMicOn={isMicOn} />

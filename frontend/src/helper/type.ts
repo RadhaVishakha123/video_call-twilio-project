@@ -28,7 +28,6 @@ export interface RoomUser {
 export interface VideoCallProps {
   videoEnabled: boolean;
   audioEnabled: boolean;
-  setIsJoining: React.Dispatch<React.SetStateAction<boolean>>;
   joinedUsers: RoomUser[];
 }
 export interface MeetingContextType {
@@ -48,8 +47,11 @@ export interface MeetingContextType {
   setSelectedCamera: React.Dispatch<React.SetStateAction<string | undefined>>;
   selectedMic: string | undefined;
   setSelectedMic: React.Dispatch<React.SetStateAction<string | undefined>>;
+  isjoining: boolean;
+  setIsJoining: React.Dispatch<React.SetStateAction<boolean>>;
 }
 export interface LocalParticipantProps {
   isCameraOn: boolean;
   isMicOn: boolean;
 }
+

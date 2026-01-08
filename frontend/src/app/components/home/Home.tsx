@@ -47,25 +47,26 @@ const Home: React.FC = () => {
     }
     navigate('/waiting-room');
     try {
-      await axios.post(
-        `${API_BASE_URL}/api/room`,
-        { roomName: finalRoomName },
-        {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        }
-      );
+      //       const roomData=await axios.post(
+      //         `${API_BASE_URL}/api/room`,
+      //         { roomName: finalRoomName },
+      //         {
+      //           headers: { Authorization: `Bearer ${accessToken}` },
+      //         }
+      //       );
+      //       console.log("home page room data:",roomData.data)
 
-      const tokenRes = await axios.post(
-        `${API_BASE_URL}/api/token`,
-        { identity: String(currLogedInUserId) },
-        {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        }
-      );
-
-      const token = tokenRes.data.accessToken;
+      //       const tokenRes = await axios.post(
+      //         `${API_BASE_URL}/api/token`,
+      //         { identity: String(currLogedInUserId) },
+      //         {
+      //           headers: { Authorization: `Bearer ${accessToken}` },
+      //         }
+      //       );
+      // console.log("home page token data:",tokenRes.data)
+      //       const token = tokenRes.data.accessToken;
       setRoomName(finalRoomName);
-      setTwilioToken(token);
+      // setTwilioToken(token);
 
       message.success(`Joined room: ${finalRoomName}`);
     } catch (error) {
@@ -214,3 +215,4 @@ const Home: React.FC = () => {
 };
 
 export default Home;
+

@@ -1,7 +1,9 @@
 import { createContext, useState } from 'react';
 import { App } from 'antd';
 import Video, { Room, RemoteParticipant, LocalParticipant } from 'twilio-video';
+import useAuth from '../hooks/useAuth';
 import { MeetingContextType } from '..//helper/type';
+import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 export const MeetingContext = createContext<MeetingContextType>({
   room: null,
@@ -20,16 +22,21 @@ export const MeetingContext = createContext<MeetingContextType>({
   setSelectedCamera: () => {},
   selectedMic: undefined,
   setSelectedMic: () => {},
+  isjoining: false,
+  setIsJoining: () => {},
 });
 export default function MeetingContextProvider({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const navigate = useNavigate();
+  const { currentLoggedInUserData } = useAuth();
   const appMessage = App.useApp().message;
   const [roomName, setRoomName] = useState<string | null>(null);
   const [twilioToken, setTwilioToken] = useState<string | null>(null);
   const [room, setRoom] = useState<Room | null>(null);
+  const [isjoining, setIsJoining] = useState(false);
   const [localParticipant, setLocalParticipant] =
     useState<LocalParticipant | null>(null);
   const [remoteParticipants, setRemoteParticipants] = useState<
@@ -106,6 +113,38 @@ export default function MeetingContextProvider({
         setRemoteParticipants((prev) =>
           prev.filter((p) => p.sid !== participant.sid)
         );
+      });
+      joinedRoom.on('disconnected', (room, error) => {
+        console.warn('Room disconnected', error);
+
+        //  Stop all local tracks
+        room.localParticipant.tracks.forEach((pub) => {
+          const track = pub.track;
+
+          if (!track) return;
+
+          if (track.kind === 'audio' || track.kind === 'video') {
+            track.stop();
+            track.detach().forEach((el) => el.remove());
+          }
+        });
+
+        //  Remove all listeners
+        room.removeAllListeners();
+        setIsJoining(false);
+
+        //  Reset meeting state
+        setRoom(null);
+        setLocalParticipant(null);
+        setRemoteParticipants([]);
+        navigate('/home');
+
+        //  (optional) UI message
+        if (error?.code === 53000) {
+          appMessage.warning(
+            'You were disconnected because you joined from another device'
+          );
+        }
       });
     } catch (err) {
       console.error('Error joining Twilio room:', err);
@@ -226,9 +265,12 @@ export default function MeetingContextProvider({
         setSelectedCamera,
         selectedMic,
         setSelectedMic,
+        isjoining,
+        setIsJoining,
       }}
     >
       {children}
     </MeetingContext.Provider>
   );
 }
+
