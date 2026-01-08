@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState,useMemo } from 'react';
 import LocalParticipant from './LocalParticipant';
 import RemoteParticipant from './RemoteParticipant';
 import {
@@ -14,14 +14,22 @@ import type { VideoCallProps } from '../../../helper/type';
 import { useNavigate } from 'react-router-dom';
 import { Avatar, Dropdown } from 'antd';
 import MediaSettings from '../setting/MediaSettings';
+import useAuth from '../../../hooks/useAuth';
+import { API_BASE_URL } from '../../../config';
+import { App } from 'antd';
+import axios from 'axios';
 export default function VideoCall({
   videoEnabled,
   audioEnabled,
   setIsJoining,
+  joinedUsers
 }: VideoCallProps) {
   const [isCameraOn, setIsCameraOn] = useState(videoEnabled);
   const [isMicOn, setIsMicOn] = useState(audioEnabled);
   const navigate = useNavigate();
+  const message = App.useApp().message;
+  const { currentLoggedInUserData } = useAuth();
+  const accessToken = currentLoggedInUserData?.accessToken;
   const {
     localParticipant,
     remoteParticipants,
@@ -68,6 +76,15 @@ export default function VideoCall({
   async function handleLeaveRoom() {
     await disconnectCall();
     setIsJoining(false);
+    const res = await axios.post(
+      `${API_BASE_URL}/api/room/leave`,
+      { roomName: roomName },
+      {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      }
+    );
+    const result = res.data;
+    message.success(`${result.message}`);
     navigate('/waiting-room');
   }
 
@@ -87,6 +104,14 @@ export default function VideoCall({
     //   disconnectCall();
     // };
   }, []);
+  const userMap = useMemo(() => {
+  const map: Record<string, string> = {};
+  joinedUsers.forEach((u) => {
+    map[u.userId] = u.username;
+  });
+  return map;
+}, [joinedUsers]);
+
 
   const totalParticipants = remoteParticipants.length + 1;
   const gridCols =
@@ -103,13 +128,10 @@ export default function VideoCall({
       <div className="flex-1 overflow-hidden">
         <div className={`grid gap-4 w-full h-full ${gridCols}`}>
           {remoteParticipants?.map((p) => (
-            <RemoteParticipant key={p.sid} participant={p} />
+            <RemoteParticipant key={p.sid} participant={p} username={userMap[p.identity]}/>
           ))}
 
-          <LocalParticipant
-            isCameraOn={isCameraOn}
-            isMicOn={isMicOn}
-          />
+          <LocalParticipant isCameraOn={isCameraOn} isMicOn={isMicOn} />
         </div>
       </div>
 
@@ -166,3 +188,4 @@ export default function VideoCall({
     </div>
   );
 }
+

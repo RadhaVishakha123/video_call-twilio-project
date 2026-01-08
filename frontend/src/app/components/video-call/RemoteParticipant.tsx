@@ -12,9 +12,10 @@ import {
 
 type Props = {
   participant: TwilioRemoteParticipant;
+  username:string
 };
 
-export default function RemoteParticipant({ participant }: Props) {
+export default function RemoteParticipant({ participant,username }: Props) {
   const videoRef = useRef<HTMLDivElement>(null);
   const [isCameraOn, setIsCameraOn] = useState(false);
   const [isMicOn, setIsMicOn] = useState(false);
@@ -90,7 +91,7 @@ export default function RemoteParticipant({ participant }: Props) {
         )}
 
         <div className="absolute bottom-2 left-2 z-10 flex items-center gap-2 bg-black/70 text-white px-3 py-1 rounded text-xs">
-          <span>{participant.identity}</span>
+          <span>{username }</span>
           {!isMicOn ? (
             <AudioMutedOutlined className="text-red-400" />
           ) : (
@@ -101,3 +102,4 @@ export default function RemoteParticipant({ participant }: Props) {
     </div>
   );
 }
+

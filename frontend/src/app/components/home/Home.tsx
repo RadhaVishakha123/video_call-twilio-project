@@ -8,6 +8,7 @@ import {
   Typography,
   Space,
   Divider,
+  Badge,
 } from 'antd';
 import {
   VideoCameraAddOutlined,
@@ -20,18 +21,20 @@ import useAuth from '../../../hooks/useAuth';
 import useMeeting from '../../../hooks/useMeeting';
 import { API_BASE_URL } from '../../../config';
 import { useNavigate } from 'react-router-dom';
-
+import { getSocket } from '../../../socket/Socket';
+import ImageCarousel from './ImageCarousel';
 const { Title, Text } = Typography;
 
 interface Room {
   name: string;
+  is_active: boolean;
 }
 
 const Home: React.FC = () => {
   const { currentLoggedInUserData } = useAuth();
   const navigate = useNavigate();
   const [roomValue, setRoomValue] = useState('');
-  const {setRoomName,setTwilioToken}=useMeeting();
+  const { setRoomName, setTwilioToken } = useMeeting();
   const [rooms, setRooms] = useState<Room[]>([]);
   const accessToken = currentLoggedInUserData?.accessToken as string;
   const userName = currentLoggedInUserData?.user.username;
@@ -43,7 +46,7 @@ const Home: React.FC = () => {
       message.warning('Please enter a room name');
       return;
     }
-
+    navigate('/waiting-room');
     try {
       await axios.post(
         `${API_BASE_URL}/api/room`,
@@ -64,7 +67,7 @@ const Home: React.FC = () => {
       const token = tokenRes.data.accessToken;
       setRoomName(finalRoomName);
       setTwilioToken(token);
-      navigate('/waiting-room');
+
       message.success(`Joined room: ${finalRoomName}`);
     } catch (error) {
       message.error('Failed to join room');
@@ -78,6 +81,17 @@ const Home: React.FC = () => {
       setRooms(res.data.rooms);
     };
     fetchRooms();
+    const socket = getSocket();
+    socket.on('room-status-updated', ({ roomName, is_active }) => {
+      setRooms((pre) =>
+        pre.map((room) =>
+          room.name == roomName ? { ...room, is_active } : room
+        )
+      );
+    });
+    return () => {
+      socket.off('room-status-updated');
+    };
   }, []);
 
   return (
@@ -159,9 +173,22 @@ const Home: React.FC = () => {
                   >
                     <List.Item.Meta
                       avatar={
-                        <div className="w-10 h-10 bg-blue-200 text-blue-600 rounded-full flex items-center justify-center">
-                          <VideoCameraAddOutlined />
-                        </div>
+                        room.is_active ? (
+                          <Badge
+                            status="processing"
+                            color="green"
+                            text="LIVE"
+                            size="small"
+                          >
+                            <div className="w-10 h-10 bg-blue-200 text-blue-600 rounded-full flex items-center justify-center">
+                              <VideoCameraAddOutlined />
+                            </div>
+                          </Badge>
+                        ) : (
+                          <div className="w-10 h-10 bg-blue-200 text-blue-600 rounded-full flex items-center justify-center">
+                            <VideoCameraAddOutlined />
+                          </div>
+                        )
                       }
                       title={
                         <span className="font-bold text-gray-700">
