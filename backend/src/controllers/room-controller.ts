@@ -15,50 +15,76 @@ export const JoinOrCreateRoom = async (
       res.status(400).json({ error: 'Room name is required' });
       return;
     }
+
     if (!req.user) {
       res.status(401).json({ error: 'Unauthorized' });
       return;
     }
-    const userId = req.user?.id;
-    const roomResult = await pool.query('SELECT * FROM rooms WHERE name = $1', [
-      roomName,
-    ]);
-    let roomId: string;
-    if (roomResult.rows.length == 0) {
-      await twilioClient.video.v1.rooms.create({
-        uniqueName: roomName,
-        type: 'group',
-      });
 
+    const userId = req.user.id;
+
+    //  Fetch DB room
+    const roomResult = await pool.query(
+      'SELECT id, room_sid FROM rooms WHERE name = $1',
+      [roomName]
+    );
+
+    //  Fetch or create Twilio room SAFELY
+    let twilioRoom;
+    try {
+      twilioRoom = await twilioClient.video.v1.rooms(roomName).fetch();
+    } catch (e: any) {
+      if (e.code === 20404) {
+        twilioRoom = await twilioClient.video.v1.rooms.create({
+          uniqueName: roomName,
+          type: 'group',
+        });
+      } else {
+        throw e;
+      }
+    }
+
+    //  Save / sync roomSid
+    let roomId: string;
+
+    if (roomResult.rows.length === 0) {
       const createdRoom = await pool.query(
-        'INSERT INTO rooms (name, created_by) VALUES ($1, $2) RETURNING id',
-        [roomName, userId]
+        `INSERT INTO rooms (name, created_by, room_sid)
+VALUES ($1, $2, $3)
+ON CONFLICT (name) DO NOTHING
+RETURNING id;
+`,
+        [roomName, userId, twilioRoom.sid]
       );
       roomId = createdRoom.rows[0].id;
     } else {
       roomId = roomResult.rows[0].id;
-      await pool.query(`UPDATE rooms SET is_active=true WHERE id=$1`, [roomId]);
+      await pool.query('UPDATE rooms SET room_sid = $1 WHERE id = $2', [
+        twilioRoom.sid,
+        roomId,
+      ]);
     }
-    // await pool.query(
-    //   `
-    //   INSERT INTO room_participants (room_id, user_id)
-    //   VALUES ($1, $2)
-    //   ON CONFLICT (room_id, user_id) DO NOTHING
-    //   `,
-    //   [roomId, userId]
-    // );
-    await UpdateRoomActiveStatus(roomId as string, roomName);
-    const user: RoomUser[] = await getRoomUsers(roomId);
-    EmitRoomUsers(roomName, user);
+
+    //  Mark active
+    await pool.query('UPDATE rooms SET is_active = true WHERE id = $1', [
+      roomId,
+    ]);
+
+    await UpdateRoomActiveStatus(roomId, roomName);
+    const users = await getRoomUsers(roomId);
+    EmitRoomUsers(roomName, users);
+
     res.status(200).json({
-      message: 'Joined room successfully',
-      roomName,
+      message: 'Room ready',
+      roomId,
+      roomSid: twilioRoom.sid,
     });
   } catch (error: any) {
     console.error('Join/Create room error:', error);
     res.status(500).json({ error: 'Failed to join room' });
   }
 };
+
 export const JoinRoomParticipant = async (
   req: AuthRequest,
   res: Response
@@ -78,11 +104,26 @@ export const JoinRoomParticipant = async (
     ]);
 
     if (roomRes.rows.length === 0) {
-      res.status(404).json({ error: 'Room not found' });
+      res.status(200).json({ error: 'Room not found' });
       return;
     }
 
     const roomId = roomRes.rows[0].id;
+    // Check if user already joined
+    const existing = await pool.query(
+      `SELECT id, joined_at
+       FROM room_participants
+       WHERE room_id = $1 AND user_id = $2`,
+      [roomId, userId]
+    );
+
+    if (existing.rows.length > 0) {
+      res.status(200).json({
+        alreadyJoined: true,
+        message: 'User already joined from another device',
+      });
+      return;
+    }
 
     await pool.query(
       `
