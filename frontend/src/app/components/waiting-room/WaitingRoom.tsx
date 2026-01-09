@@ -87,7 +87,6 @@ export default function WaitingRoom() {
     };
   }, [selectedCamera, selectedMic, videoEnabled, audioEnabled, isjoining]);
   useEffect(() => {
-    if (!twilioToken) return;
     const socket = getSocket();
 
     //  Attach listener FIRST
