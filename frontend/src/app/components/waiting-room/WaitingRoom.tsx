@@ -1,4 +1,4 @@
-import { Button, Typography, Avatar, Select, Tooltip } from 'antd';
+import { Button, Typography, Avatar, Modal, Tooltip } from 'antd';
 import { useEffect, useRef, useState } from 'react';
 import useMeeting from '../../../hooks/useMeeting';
 import useAuth from '../../../hooks/useAuth';
@@ -10,7 +10,6 @@ import {
   VideoCameraFilled,
   AudioOutlined,
   AudioMutedOutlined,
-  UserOutlined,
 } from '@ant-design/icons';
 import { RoomUser } from '../../../helper/type';
 import { getInitials } from '../../../helper/utility';
@@ -18,16 +17,24 @@ import { API_BASE_URL } from '../../../config';
 import axios from 'axios';
 import VideoCall from '../video-call/VideoCall';
 import MediaSettings from '../setting/MediaSettings';
-
 const { Title, Text } = Typography;
 export default function WaitingRoom() {
-  const { roomName, twilioToken, cancelMeeting, selectedCamera, selectedMic } =
-    useMeeting();
-  
+  const {
+    twilioToken,
+    roomName,
+    cancelMeeting,
+    selectedCamera,
+    selectedMic,
+    localParticipant,
+    setTwilioToken,
+    isjoining,
+    setIsJoining,
+  } = useMeeting();
+
   const [joinedUsers, setJoinedUsers] = useState<RoomUser[]>([]);
   const { currentLoggedInUserData } = useAuth();
+  const currLogedInUserId = currentLoggedInUserData?.user.id;
   const accessToken = currentLoggedInUserData?.accessToken as string;
-  const userName = currentLoggedInUserData?.user.username;
   const message = App.useApp().message;
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -35,7 +42,6 @@ export default function WaitingRoom() {
 
   const [videoEnabled, setVideoEnabled] = useState(true);
   const [audioEnabled, setAudioEnabled] = useState(true);
-  const [isjoining, setIsJoining] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -79,7 +85,7 @@ export default function WaitingRoom() {
     return () => {
       streamRef.current?.getTracks().forEach((t) => t.stop());
     };
-  }, [selectedCamera, selectedMic, videoEnabled, audioEnabled]);
+  }, [selectedCamera, selectedMic, videoEnabled, audioEnabled, isjoining]);
   useEffect(() => {
     const socket = getSocket();
 
@@ -117,29 +123,89 @@ export default function WaitingRoom() {
       socket.off('room-users-updated');
     };
   }, [roomName]);
+  const handleLeavewaitingRoom = async () => {
+    cancelMeeting();
+    navigate('/Home');
+  };
+  const stopPreviewTracks = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => {
+        track.stop();
+      });
+      streamRef.current = null;
+    }
+  };
 
   const handleJoin = async () => {
     if (!selectedCamera && !selectedMic) {
       message.error('Please select a camera and microphone');
       return;
     }
-    const res = await axios.post(
-      `${API_BASE_URL}/api/room/participant`,
-      { roomName: roomName },
-      {
-        headers: { Authorization: `Bearer ${accessToken}` },
+
+    try {
+      const roomData = await axios.post(
+        `${API_BASE_URL}/api/room`,
+        { roomName: roomName },
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }
+      );
+      console.log('home page room data:', roomData.data);
+      const tokenRes = await axios.post(
+        `${API_BASE_URL}/api/token`,
+        { identity: String(currLogedInUserId) },
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }
+      );
+      console.log('home page token data:', tokenRes.data);
+      const token = tokenRes.data.accessToken;
+      setTwilioToken(token);
+      const res = await axios.post(
+        `${API_BASE_URL}/api/room/participant`,
+        { roomName, sid: localParticipant },
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }
+      );
+
+      const result = res.data;
+
+      //  CASE 1: User already joined from another device
+      if (result.alreadyJoined) {
+        Modal.confirm({
+          title: 'Already joined',
+          content:
+            'You are already joined from another device. Do you want to close that session and join here?',
+          okText: 'Yes, join here',
+          cancelText: 'No',
+          centered: true,
+
+          onOk: async () => {
+            stopPreviewTracks();
+            message.success('Joined successfully');
+            setIsJoining(true);
+          },
+
+          onCancel: () => {
+            handleLeavewaitingRoom();
+          },
+        });
+
+        return;
       }
-    );
-    const result = await res.data;
-    streamRef.current?.getTracks().forEach((t) => t.stop());
-    message.success(`${result.message}`);
-    setIsJoining(true);
+
+      //  CASE 2: Normal join
+      streamRef.current?.getTracks().forEach((t) => t.stop());
+      message.success('Joined successfully');
+      setIsJoining(true);
+    } catch (error) {
+      console.error('Join error:', error);
+      message.error('Failed to join meeting');
+    }
   };
-  const handleLeavewaitingRoom = async () => {
-    cancelMeeting();
-    navigate('/Home');
-  };
-  if (!roomName || !twilioToken) {
+
+  if (!roomName) {
     return <div>Invalid meeting</div>;
   }
   if (isjoining) {
@@ -147,7 +213,6 @@ export default function WaitingRoom() {
       <VideoCall
         videoEnabled={videoEnabled}
         audioEnabled={audioEnabled}
-        setIsJoining={setIsJoining}
         joinedUsers={joinedUsers}
       />
     );
@@ -293,3 +358,4 @@ export default function WaitingRoom() {
     </div>
   );
 }
+
